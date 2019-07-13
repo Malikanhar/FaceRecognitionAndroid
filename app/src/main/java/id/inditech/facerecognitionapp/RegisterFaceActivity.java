@@ -5,13 +5,16 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.InputType;
+import android.util.Base64;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
@@ -19,6 +22,16 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
@@ -29,6 +42,7 @@ import org.opencv.core.MatOfRect;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 
@@ -36,6 +50,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 public class RegisterFaceActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
@@ -47,13 +62,11 @@ public class RegisterFaceActivity extends AppCompatActivity implements CameraBri
     private Mat mRgba, mGray;
     private Toast mToast;
     private int maximumImages = 3;
-    private TinyDB tinydb;
-    private String name;
+    private String name, key;
     private Button btnTakePicture;
     private File mCascadeFile;
     private CascadeClassifier mClassifier;
-    private ArrayList<Mat> newImages;
-    private ArrayList<String> newImagesLabels;
+    private DatabaseReference mDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,9 +74,19 @@ public class RegisterFaceActivity extends AppCompatActivity implements CameraBri
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_register_face);
 
-        tinydb = new TinyDB(this);
-        newImages = new ArrayList<>();
-        newImagesLabels = new ArrayList<>();
+        mDatabase = FirebaseDatabase.getInstance().getReference();
+
+        Bundle extras = getIntent().getExtras();
+        if(extras != null){
+            name = extras.getString("nama");
+            key = extras.getString("key");
+        } else {
+            showToast("Intent error");
+            finish();
+        }
+
+        images = new ArrayList<>();
+        imagesLabels = new ArrayList<>();
 
         btnTakePicture = findViewById(R.id.btn_take);
         showToast("Ambil " + maximumImages + " Gambar");
@@ -71,8 +94,11 @@ public class RegisterFaceActivity extends AppCompatActivity implements CameraBri
             @Override
             public void onClick(View v) {
                 Log.i(TAG, "Gray height: " + mGray.height() + " Width: " + mGray.width() + " total: " + mGray.total());
-                if (mGray.total() == 0)
+                if (mGray.total() == 0) {
+                    showToast("Tidak ada wajah yang terdeksi");
                     return;
+
+                }
 
                 Size imageSize = new Size(200, 200);
                 Imgproc.resize(mGray, mGray, imageSize);
@@ -81,25 +107,15 @@ public class RegisterFaceActivity extends AppCompatActivity implements CameraBri
 
                 Mat image = mGray.reshape(0, (int) mGray.total()); // Create column vector
                 Log.i(TAG, "Vector height: " + image.height() + " Width: " + image.width() + " total: " + image.total());
-                newImages.add(image); // Add current image to the array
-                addLabel(name);
+                addFace(name, image);
 
-                if (newImages.size() >= maximumImages) {
-//                    images.remove(0); // Remove first image
-//                    imagesLabels.remove(0); // Remove first label
-//                    Log.i(TAG, "The number of images is limited to: " + images.size());
-                    for(Mat m : newImages){
-                        images.add(m);
-                    }
-                    for(String s : newImagesLabels){
-                        imagesLabels.add(s);
-                    }
-                    tinydb.putListMat("images", images);
-                    tinydb.putListString("imagesLabels", imagesLabels);
-                    showToast("Berhasil mendaftarkan wajah");
+                if (images.size() >= maximumImages) {
+                    btnTakePicture.setEnabled(false);
                     finish();
+                } else {
+                    showToast("Ambil " + (maximumImages - images.size()) + " gambar lagi");
                 }
-                showToast("Ambil " + (maximumImages - newImages.size()) + " gambar lagi");
+
             }
         });
 
@@ -111,6 +127,8 @@ public class RegisterFaceActivity extends AppCompatActivity implements CameraBri
 
 
     }
+    List<File> files;
+
 
     private void showToast(String message) {
         if (mToast != null && mToast.getView().isShown())
@@ -119,60 +137,21 @@ public class RegisterFaceActivity extends AppCompatActivity implements CameraBri
         mToast.show();
     }
 
-    private void addLabel(String string) {
+    private void addFace(String string, Mat face) {
         String label = string.substring(0, 1).toUpperCase(Locale.US) + string.substring(1).trim().toLowerCase(Locale.US); // Make sure that the name is always uppercase and rest is lowercase
-        newImagesLabels.add(label); // Add label to list of labels
+        imagesLabels.add(label); // Add label to list of labels
+        if(face.total() != 0){
+            int size = (int) (face.total() * face.channels());
+            byte[] data = new byte[size];
+            face.get(0, 0, data);
+            String dataString = new String(Base64.encode(data, Base64.DEFAULT));
+            mDatabase.child("users").child(key).child("faces").push().child("data").setValue(dataString);
+            images.add(face);
+        }
         Log.i(TAG, "Label: " + label);
-//        showToast("add label " + label);
-
-//        trainFaces(); // When we have finished setting the label, then retrain faces
     }
 
-    private void showEnterLabelDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Please enter your name:");
 
-        final EditText input = new EditText(this);
-        input.setInputType(InputType.TYPE_CLASS_TEXT);
-        builder.setView(input);
-
-        builder.setPositiveButton("Submit", null); // Set up positive button, but do not provide a listener, so we can check the string before dismissing the dialog
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                finish();
-            }
-        });
-        builder.setCancelable(false); // User has to input a name
-        AlertDialog dialog = builder.create();
-
-        // Source: http://stackoverflow.com/a/7636468/2175837
-        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
-            @Override
-            public void onShow(final DialogInterface dialog) {
-                Button mButton = ((AlertDialog) dialog).getButton(AlertDialog.BUTTON_POSITIVE);
-                mButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        String string = input.getText().toString().trim();
-                        if (!string.isEmpty()) { // Make sure the input is valid
-                            // If input is valid, dismiss the dialog and add the label to the array
-                            name = string;
-//                            showToast(name);
-                            dialog.dismiss();
-
-
-                        }
-                    }
-                });
-            }
-        });
-
-        // Show keyboard, so the user can start typing straight away
-        dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
-
-        dialog.show();
-    }
 
     private BaseLoaderCallback mBaseLoader = new BaseLoaderCallback(this) {
         @Override
@@ -180,7 +159,7 @@ public class RegisterFaceActivity extends AppCompatActivity implements CameraBri
             switch (status) {
                 case SUCCESS:
                     Log.i(TAG, "OpenCV loaded successfully");
-                    showEnterLabelDialog();
+
                     try {
                         InputStream is = getResources().openRawResource(R.raw.lbpcascade_frontalface);
                         File cascadeDir = getDir("cascade", Context.MODE_PRIVATE);
@@ -208,15 +187,6 @@ public class RegisterFaceActivity extends AppCompatActivity implements CameraBri
                     mOpenCvCameraView.setCameraIndex(1); // select front camera
 
                     mOpenCvCameraView.enableView();
-
-                    images = tinydb.getListMat("images");
-                    imagesLabels = tinydb.getListString("imagesLabels");
-
-                    Log.i(TAG, "Number of images: " + images.size()  + ". Number of labels: " + imagesLabels.size());
-                    for(Mat m : images){
-                        Log.i(TAG, "Images height: " + m.height() + " Width: " + m.width() + " total: " + m.total());
-                    }
-                    showToast("Number of images: " + images.size()  + ". Number of labels: " + imagesLabels.size());
 
                     break;
 
@@ -296,20 +266,21 @@ public class RegisterFaceActivity extends AppCompatActivity implements CameraBri
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-        Mat mGrayTmp = inputFrame.gray();
+        Mat gray = inputFrame.gray();
         Mat mRgbaTmp = inputFrame.rgba();
 
         Core.rotate(mRgbaTmp, mRgbaTmp, Core.ROTATE_90_COUNTERCLOCKWISE);
-        Core.rotate(mGrayTmp, mGrayTmp, Core.ROTATE_90_COUNTERCLOCKWISE);
+        Core.rotate(gray, gray, Core.ROTATE_90_COUNTERCLOCKWISE);
 
         MatOfRect faces = new MatOfRect();
-        mClassifier.detectMultiScale(mGrayTmp, faces, 1.1, 2, 2,
-                new Size(40, 40), new Size());
+        mClassifier.detectMultiScale(gray, faces, 1.1, 2, 2,
+                new Size(200, 200), new Size());
 
         Rect[] facesArray = faces.toArray();
-        for (int i = 0; i < facesArray.length; i++) {
-
-            Imgproc.rectangle(mRgbaTmp, facesArray[i].tl(), facesArray[i].br(), new Scalar(0, 255, 0), 3);
+        Mat mGrayTmp = new Mat();
+        if(facesArray.length > 0) {
+            Imgproc.rectangle(mRgbaTmp, facesArray[0].tl(), facesArray[0].br(), new Scalar(0, 255, 0), 3);
+            mGrayTmp = new Mat(gray, facesArray[0]);
         }
 
         Core.rotate(mRgbaTmp, mRgbaTmp, Core.ROTATE_90_CLOCKWISE);

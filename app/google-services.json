@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "64580960535",
+    "firebase_url": "https://facerecognitionapp-f1f7a.firebaseio.com",
+    "project_id": "facerecognitionapp-f1f7a",
+    "storage_bucket": "facerecognitionapp-f1f7a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:64580960535:android:c0f25a95b440c709",
+        "android_client_info": {
+          "package_name": "id.inditech.facerecognitionapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "64580960535-3t61om6ia7ldfcs5b56ujjk19cgu3a55.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "id.inditech.facerecognitionapp",
+            "certificate_hash": "ef6a56aa16987c84519b331c6b78a69a69f0a46b"
+          }
+        },
+        {
+          "client_id": "64580960535-to4247iolhs7g8r6b53blkn8olufp4e6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAyk0EllS8_GlxEwb9xJ1zx2mwhBcFzdPQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "64580960535-to4247iolhs7g8r6b53blkn8olufp4e6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

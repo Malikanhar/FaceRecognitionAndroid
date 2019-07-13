@@ -18,6 +18,17 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FileDownloadTask;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
@@ -35,6 +46,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -130,8 +142,11 @@ public class RecognizeActivity extends AppCompatActivity implements CameraBridge
                 }
 
                 Log.i(TAG, "Gray height: " + mGray.height() + " Width: " + mGray.width() + " total: " + mGray.total());
-                if (mGray.total() == 0)
+                if (mGray.total() == 0) {
+                    showToast("Tidak ada wajah yang terdeksi");
                     return;
+
+                }
 
                 // Scale image in order to decrease computation time and make the image square,
                 // so it does not crash on phones with different aspect ratios for the front
@@ -257,6 +272,7 @@ public class RecognizeActivity extends AppCompatActivity implements CameraBridge
                     imagesLabels = tinydb.getListString("imagesLabels");
 
                     Log.i(TAG, "Number of images: " + images.size()  + ". Number of labels: " + imagesLabels.size());
+                    showToast("Number of images: " + images.size()  + ". Number of labels: " + imagesLabels.size());
                     if (!images.isEmpty()) {
                         trainFaces(); // Train images after they are loaded
                         Log.i(TAG, "Images height: " + images.get(0).height() + " Width: " + images.get(0).width() + " total: " + images.get(0).total());
@@ -302,20 +318,21 @@ public class RecognizeActivity extends AppCompatActivity implements CameraBridge
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-        Mat mGrayTmp = inputFrame.gray();
+        Mat gray = inputFrame.gray();
         Mat mRgbaTmp = inputFrame.rgba();
 
         Core.rotate(mRgbaTmp, mRgbaTmp, Core.ROTATE_90_COUNTERCLOCKWISE);
-        Core.rotate(mGrayTmp, mGrayTmp, Core.ROTATE_90_COUNTERCLOCKWISE);
+        Core.rotate(gray, gray, Core.ROTATE_90_COUNTERCLOCKWISE);
 
         MatOfRect faces = new MatOfRect();
-        mClassifier.detectMultiScale(mGrayTmp, faces, 1.1, 2, 2,
-                new Size(40, 40), new Size());
+        mClassifier.detectMultiScale(gray, faces, 1.1, 2, 2,
+                new Size(200, 200), new Size());
 
         Rect[] facesArray = faces.toArray();
-        for (int i = 0; i < facesArray.length; i++) {
-
-            Imgproc.rectangle(mRgbaTmp, facesArray[i].tl(), facesArray[i].br(), new Scalar(0, 255, 0), 3);
+        Mat mGrayTmp = new Mat();
+        if(facesArray.length > 0) {
+            Imgproc.rectangle(mRgbaTmp, facesArray[0].tl(), facesArray[0].br(), new Scalar(0, 255, 0), 3);
+            mGrayTmp = new Mat(gray, facesArray[0]);
         }
 
         Core.rotate(mRgbaTmp, mRgbaTmp, Core.ROTATE_90_CLOCKWISE);

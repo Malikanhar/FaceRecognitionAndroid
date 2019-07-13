@@ -1,11 +1,22 @@
 package id.inditech.facerecognitionapp;
 
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.Toast;
+
+import org.opencv.core.Mat;
+import org.opencv.imgcodecs.Imgcodecs;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FaceRecognitionAppActivity extends AppCompatActivity {
 
@@ -21,11 +32,15 @@ public class FaceRecognitionAppActivity extends AppCompatActivity {
         btnHistory = findViewById(R.id.llRiwayat);
         btnAbout = findViewById(R.id.llTentang);
 
+
+        //loadFace();
+        startActivity(new Intent(this, LoadingActivity.class));
+
         btnRecord.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent  = new Intent(FaceRecognitionAppActivity.this, RegisterFaceActivity.class);
-                startActivity(intent);
+                Intent intent  = new Intent(FaceRecognitionAppActivity.this, DaftarUserActivity.class);
+                startActivityForResult(intent, 101);
             }
         });
 
@@ -52,5 +67,42 @@ public class FaceRecognitionAppActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+
+
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode){
+            case 101:
+                startActivity(new Intent(this, LoadingActivity.class));
+                break;
+        }
+    }
+
+    private void loadFace(){
+        TinyDB tinyDB = new TinyDB(this);
+        ArrayList<Mat> matList = tinyDB.getListMat("images");
+        ArrayList<String> stringList = tinyDB.getListString("imagesLabels");
+        File file = getFilesDir();
+        for(File user : file.listFiles()){
+            for(File ff : user.listFiles()){
+                Toast.makeText(this, ff.getAbsolutePath(), Toast.LENGTH_LONG);
+                Log.e("90909090", ff.getAbsolutePath());
+                Mat mat = Imgcodecs.imread(ff.getAbsolutePath(), Imgcodecs.IMREAD_COLOR);
+                matList.add(mat);
+                stringList.add(user.getName());
+            }
+        }
+        tinyDB.putListMat( "images", matList);
+        tinyDB.putListString("imagesLabels", stringList);
+
     }
 }
