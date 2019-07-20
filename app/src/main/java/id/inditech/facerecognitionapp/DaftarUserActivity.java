@@ -3,6 +3,7 @@ package id.inditech.facerecognitionapp;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -29,10 +30,11 @@ import java.util.List;
 
 public class DaftarUserActivity extends AppCompatActivity {
     private ListView lvUser;
-    private Button btnTambah;
+    private FloatingActionButton btnTambah;
     List<User> listUser;
     private DatabaseReference mDatabase;
     UserListAdapter adapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

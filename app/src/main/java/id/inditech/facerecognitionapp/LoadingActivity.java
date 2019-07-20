@@ -75,15 +75,16 @@ public class LoadingActivity extends AppCompatActivity {
 
                             for(DataSnapshot data : dataSnapshot.getChildren()){
                                 String nama = data.child("nama").getValue(String.class);
-
+//                                String key = data.child("key").getValue(String.class);
                                 for (DataSnapshot face : data.child("faces").getChildren()) {
                                     String faceData = face.child("data").getValue(String.class);
                                     byte[] buffer = Base64.decode(faceData, Base64.DEFAULT);
                                     Mat mat = new Mat(buffer.length, 1, CvType.CV_8U);
                                     mat.put(0, 0, buffer);
+                                    Log.d("onDATACHANGE ", data.getKey());
 
                                     faces.add(mat);
-                                    labels.add(nama);
+                                    labels.add(data.getKey());
                                 }
 
 

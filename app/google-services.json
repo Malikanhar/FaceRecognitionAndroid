@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "64580960535-ufhnpfk60n1r092ldrst85d2997l0il3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "id.inditech.facerecognitionapp",
+            "certificate_hash": "3d6865e5b786b39241d67bc94acb58042404b460"
+          }
+        },
+        {
           "client_id": "64580960535-3t61om6ia7ldfcs5b56ujjk19cgu3a55.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

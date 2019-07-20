@@ -44,7 +44,11 @@ import org.opencv.objdetect.CascadeClassifier;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -60,6 +64,7 @@ public class RecognizeActivity extends AppCompatActivity implements CameraBridge
     private CameraBridgeViewBase mOpenCvCameraView;
     private Mat mRgba, mGray;
     private Toast mToast;
+    private DatabaseReference mDatabase;
     private float faceThreshold = 0.25f, distanceThreshold = 0.25f;
     private int maximumImages;
     private TinyDB tinydb;
@@ -67,6 +72,7 @@ public class RecognizeActivity extends AppCompatActivity implements CameraBridge
     private Button btnTakePicture;
     private File mCascadeFile;
     private CascadeClassifier mClassifier;
+    private String mName;
 
     private void showToast(String message) {
         if (mToast != null && mToast.getView().isShown())
@@ -124,6 +130,20 @@ public class RecognizeActivity extends AppCompatActivity implements CameraBridge
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCameraIndex(1);
         mOpenCvCameraView.setCvCameraViewListener(this);
+
+        mDatabase = FirebaseDatabase.getInstance().getReference().child("users");
+      //  mDatabase.child("users").addValueEventListener(postListener);
+//        mDatabase.addValueEventListener(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+//                Log.d(TAG, "onDataChange: "+dataSnapshot.getValue());
+//            }
+//
+//            @Override
+//            public void onCancelled(@NonNull DatabaseError databaseError) {
+//
+//            }
+//        });
 
         btnTakePicture = findViewById(R.id.btn_take);
         btnTakePicture.setOnClickListener(new View.OnClickListener() {
@@ -192,12 +212,22 @@ public class RecognizeActivity extends AppCompatActivity implements CameraBridge
                     String minDistString = String.format(Locale.US, "%.4f", minDist);
                     String faceDistString = String.format(Locale.US, "%.4f", faceDist);
 
-                    if (faceDist < faceThreshold && minDist < distanceThreshold) // 1. Near face space and near a face class
+                    if (faceDist < faceThreshold && minDist < distanceThreshold) { // 1. Near face space and near a face class
                         showToast("Face detected: " + imagesLabels.get(minIndex) + ". Distance: " + minDistString);
-                    else if (faceDist < faceThreshold) // 2. Near face space but not near a known face class
+                        User user = new User();
+                        user.setNama(imagesLabels.get(minIndex));
+                        user.setTanggal(getTanggal());
+                        user.setWaktu(getWaktu());
+                        String key = imagesLabels.get(minIndex);
+                        mDatabase.child(key).child("tanggal").setValue(getTanggal());
+                        mDatabase.child(key).child("waktu").setValue(getWaktu());
+                    }
+                    else if (faceDist < faceThreshold) {// 2. Near face space but not near a known face class
                         showToast("Unknown face. Face distance: " + faceDistString + ". Closest Distance: " + minDistString);
-                    else if (minDist < distanceThreshold) // 3. Distant from face space and near a face class
+                    }
+                    else if (minDist < distanceThreshold) { // 3. Distant from face space and near a face class
                         showToast("False recognition. Face distance: " + faceDistString + ". Closest Distance: " + minDistString);
+                    }
                     else // 4. Distant from face space and not near a known face class.
                         showToast("Image is not a face. Face distance: " + faceDistString + ". Closest Distance: " + minDistString);
                 }
@@ -287,6 +317,20 @@ public class RecognizeActivity extends AppCompatActivity implements CameraBridge
         }
     };
 
+    private String getWaktu(){
+        DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
+        Date date = new Date();
+        return dateFormat.format(date);
+    }
+
+    public String getTanggal(){
+        Date today = Calendar.getInstance().getTime();
+        SimpleDateFormat formatter = new SimpleDateFormat("dd MMMM yyyy");
+        return formatter.format(today);
+    }
+
+
+
     private void loadOpenCV() {
         if (!OpenCVLoader.initDebug(true)) {
             Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
@@ -371,9 +415,6 @@ public class RecognizeActivity extends AppCompatActivity implements CameraBridge
                     break;
             }
         }
-
-
-
         mGray = mGrayTmp;
         mRgba = mRgbaTmp;
 

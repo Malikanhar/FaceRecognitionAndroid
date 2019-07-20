@@ -23,7 +23,7 @@
 
     <GridLayout
         android:id="@+id/mainGrid"
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="20dp"
         android:columnCount="2"
         android:rowCount="3"
         android:alignmentMode="alignMargins"
@@ -61,6 +61,7 @@
 
                 <TextView
                     android:text="Daftarkan Wajah"
+                    android:gravity="center"
                     android:textAlignment="center"
                     android:textColor="@android:color/black"
                     android:textSize="18sp"

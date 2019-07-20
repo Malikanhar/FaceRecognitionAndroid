@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <LinearLayout
+        android:id="@+id/llDate"
         android:layout_marginTop="36dp"
         android:layout_marginBottom="12dp"
         android:gravity="center"
@@ -21,17 +23,55 @@
 
         <ImageView
             android:id="@+id/ivEdit"
+            android:clickable="true"
             android:src="@drawable/pencil"
             android:layout_width="20dp"
             android:layout_height="20dp" />
 
     </LinearLayout>
 
-    <ListView
-        android:layout_marginTop="80dp"
+    <LinearLayout
+        android:id="@+id/llTitle"
+        android:layout_marginTop="14dp"
+        android:layout_below="@+id/llDate"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
-    </ListView>
+        <TextView
+            android:id="@+id/tvName"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textSize="18sp"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:hint="Name"/>
+
+        <TextView
+            android:id="@+id/tvDate"
+            android:hint="08 Juli 2019"
+            android:gravity="center"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"/>
+
+        <TextView
+            android:id="@+id/tvTime"
+            android:hint="08:40"
+            android:gravity="center"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+
+
+    <ListView
+        android:id="@+id/lvHistory"
+        android:layout_marginTop="10dp"
+        android:layout_below="@+id/llTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
 
 </RelativeLayout>

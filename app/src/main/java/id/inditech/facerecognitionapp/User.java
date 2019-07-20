@@ -9,6 +9,25 @@ public class User {
     private String nama;
     private String id;
     private List<Mat> faces = new ArrayList<>();
+    private String tanggal;
+    private String waktu;
+
+    public String getTanggal() {
+        return tanggal;
+    }
+
+    public void setTanggal(String tanggal) {
+        this.tanggal = tanggal;
+    }
+
+    public String getWaktu() {
+        return waktu;
+    }
+
+    public void setWaktu(String waktu) {
+        this.waktu = waktu;
+    }
+
     public User(){
 
     }

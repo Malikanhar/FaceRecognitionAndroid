@@ -145,7 +145,8 @@ public class RegisterFaceActivity extends AppCompatActivity implements CameraBri
             byte[] data = new byte[size];
             face.get(0, 0, data);
             String dataString = new String(Base64.encode(data, Base64.DEFAULT));
-            mDatabase.child("users").child(key).child("faces").push().child("data").setValue(dataString);
+            mDatabase.child("users").child(key).child("" +
+                    "").push().child("data").setValue(dataString);
             images.add(face);
         }
         Log.i(TAG, "Label: " + label);
@@ -319,8 +320,6 @@ public class RegisterFaceActivity extends AppCompatActivity implements CameraBri
                     break;
             }
         }
-
-
 
         mGray = mGrayTmp;
         mRgba = mRgbaTmp;
