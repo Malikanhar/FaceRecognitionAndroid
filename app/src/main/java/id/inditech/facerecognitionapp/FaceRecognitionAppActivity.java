@@ -82,6 +82,9 @@ public class FaceRecognitionAppActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if(resultCode == 111){
+            finish();
+        }
         switch (requestCode){
             case 101:
                 startActivity(new Intent(this, LoadingActivity.class));

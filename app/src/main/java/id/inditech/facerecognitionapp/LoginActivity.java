@@ -36,4 +36,10 @@ public class LoginActivity extends AppCompatActivity {
 
 
     }
+
+    @Override
+    public void onBackPressed() {
+        setResult(111);
+        
+    }
 }
