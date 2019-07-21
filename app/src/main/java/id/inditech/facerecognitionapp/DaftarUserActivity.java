@@ -4,6 +4,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -32,6 +33,7 @@ public class DaftarUserActivity extends AppCompatActivity {
     private ListView lvUser;
     private FloatingActionButton btnTambah;
     List<User> listUser;
+    SwipeRefreshLayout mRefresh;
     private DatabaseReference mDatabase;
     UserListAdapter adapter;
 
@@ -41,6 +43,9 @@ public class DaftarUserActivity extends AppCompatActivity {
         setContentView(R.layout.activity_daftar_user);
         lvUser = findViewById(R.id.lv_user);
         btnTambah = findViewById(R.id.btn_tambah);
+        mRefresh = findViewById(R.id.refresh);
+
+        mRefresh.setRefreshing(true);
 
         mDatabase = FirebaseDatabase.getInstance().getReference();
 
@@ -96,6 +101,7 @@ public class DaftarUserActivity extends AppCompatActivity {
                 listUser.add(user);
             }
             adapter.notifyDataSetChanged();
+            mRefresh.setRefreshing(false);
         }
 
         @Override

@@ -1,5 +1,6 @@
 package id.inditech.facerecognitionapp;
 
+import android.media.FaceDetector;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 
@@ -32,9 +33,10 @@ public class FaceRecognitionAppActivity extends AppCompatActivity {
         btnHistory = findViewById(R.id.llRiwayat);
         btnAbout = findViewById(R.id.llTentang);
 
+        startActivityForResult(new Intent(FaceRecognitionAppActivity.this, LoginActivity.class), 101);
 
         //loadFace();
-        startActivity(new Intent(this, LoadingActivity.class));
+        //startActivity(new Intent(this, LoadingActivity.class));
 
         btnRecord.setOnClickListener(new View.OnClickListener() {
             @Override

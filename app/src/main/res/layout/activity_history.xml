@@ -50,7 +50,7 @@
 
         <TextView
             android:id="@+id/tvDate"
-            android:hint="08 Juli 2019"
+            android:text="Tanggal"
             android:gravity="center"
             android:layout_weight="1"
             android:layout_width="0dp"
@@ -58,7 +58,7 @@
 
         <TextView
             android:id="@+id/tvTime"
-            android:hint="08:40"
+            android:text="Waktu"
             android:gravity="center"
             android:layout_weight="1"
             android:layout_width="0dp"

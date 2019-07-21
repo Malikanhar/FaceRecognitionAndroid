@@ -84,7 +84,7 @@ public class LoadingActivity extends AppCompatActivity {
                                     Log.d("onDATACHANGE ", data.getKey());
 
                                     faces.add(mat);
-                                    labels.add(data.getKey());
+                                    labels.add(nama);
                                 }
 
 

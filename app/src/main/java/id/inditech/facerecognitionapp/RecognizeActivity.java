@@ -131,7 +131,7 @@ public class RecognizeActivity extends AppCompatActivity implements CameraBridge
         mOpenCvCameraView.setCameraIndex(1);
         mOpenCvCameraView.setCvCameraViewListener(this);
 
-        mDatabase = FirebaseDatabase.getInstance().getReference().child("users");
+        mDatabase = FirebaseDatabase.getInstance().getReference().child("absents");
       //  mDatabase.child("users").addValueEventListener(postListener);
 //        mDatabase.addValueEventListener(new ValueEventListener() {
 //            @Override
@@ -219,8 +219,12 @@ public class RecognizeActivity extends AppCompatActivity implements CameraBridge
                         user.setTanggal(getTanggal());
                         user.setWaktu(getWaktu());
                         String key = imagesLabels.get(minIndex);
-                        mDatabase.child(key).child("tanggal").setValue(getTanggal());
-                        mDatabase.child(key).child("waktu").setValue(getWaktu());
+                        String keyDB = mDatabase.push().getKey();
+                        mDatabase.child(keyDB).child("tanggal").setValue(getTanggal());
+                        mDatabase.child(keyDB).child("waktu").setValue(getWaktu());
+                        mDatabase.child(keyDB).child("nama").setValue(key);
+                        showToast("Berhasil absent");
+                        finish();
                     }
                     else if (faceDist < faceThreshold) {// 2. Near face space but not near a known face class
                         showToast("Unknown face. Face distance: " + faceDistString + ". Closest Distance: " + minDistString);
