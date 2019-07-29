@@ -47,14 +47,14 @@ public class DaftarUserActivity extends AppCompatActivity {
 
         mRefresh.setRefreshing(true);
 
-        mDatabase = FirebaseDatabase.getInstance().getReference();
+        mDatabase = FirebaseDatabase.getInstance().getReference("users");
 
         listUser = new ArrayList<>();
 
         adapter = new UserListAdapter(this, listUser);
         lvUser.setAdapter(adapter);
 
-        mDatabase.child("users").addValueEventListener(postListener);
+        mDatabase.addValueEventListener(postListener);
 
         btnTambah.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -92,11 +92,11 @@ public class DaftarUserActivity extends AppCompatActivity {
                 User user = new User(data.child("nama").getValue(String.class));
                 user.setId(data.getKey());
                 for(DataSnapshot face : data.child("faces").getChildren()){
-                    String faceData = face.child("data").getValue(String.class);
-                    byte[] buffer = Base64.decode(faceData, Base64.DEFAULT);
-                    Mat mat = new Mat(buffer.length, 1, CvType.CV_8U);
-                    mat.put(0, 0, buffer);
-                    user.addFace(mat);
+//                    String faceData = face.child("data").getValue(String.class);
+//                    byte[] buffer = Base64.decode(faceData, Base64.DEFAULT);
+//                    Mat mat = new Mat(buffer.length, 1, CvType.CV_8U);
+//                    mat.put(0, 0, buffer);
+                    user.addFace(null);
                 }
                 listUser.add(user);
             }
@@ -142,9 +142,9 @@ public class DaftarUserActivity extends AppCompatActivity {
                         if (!string.isEmpty()) { // Make sure the input is valid
                             // If input is valid, dismiss the dialog and add the label to the array
 
-                            String key = mDatabase.child("users").push().getKey();
+                            String key = mDatabase.push().getKey();
                             Intent intent = new Intent(DaftarUserActivity.this, RegisterFaceActivity.class);
-                            mDatabase.child("users").child(key).child("nama").setValue(string);
+                            mDatabase.child(key).child("nama").setValue(string);
                             intent.putExtra("key", key);
                             intent.putExtra("nama", string);
                             startActivity(intent);

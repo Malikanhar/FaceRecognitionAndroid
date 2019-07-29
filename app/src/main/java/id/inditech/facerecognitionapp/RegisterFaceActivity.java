@@ -1,12 +1,14 @@
 package id.inditech.facerecognitionapp;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -21,6 +23,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -67,6 +70,8 @@ public class RegisterFaceActivity extends AppCompatActivity implements CameraBri
     private File mCascadeFile;
     private CascadeClassifier mClassifier;
     private DatabaseReference mDatabase;
+    private StorageReference mStorage;
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,7 +79,10 @@ public class RegisterFaceActivity extends AppCompatActivity implements CameraBri
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_register_face);
 
-        mDatabase = FirebaseDatabase.getInstance().getReference();
+        progressDialog = new ProgressDialog(this);
+
+        mDatabase = FirebaseDatabase.getInstance().getReference("users");
+        mStorage = FirebaseStorage.getInstance().getReference("users");
 
         Bundle extras = getIntent().getExtras();
         if(extras != null){
@@ -105,16 +113,12 @@ public class RegisterFaceActivity extends AppCompatActivity implements CameraBri
                 Log.i(TAG, "Small gray height: " + mGray.height() + " Width: " + mGray.width() + " total: " + mGray.total());
                 //SaveImage(mGray);
 
-                Mat image = mGray.reshape(0, (int) mGray.total()); // Create column vector
+                //Mat image = mGray.reshape(0, (int) mGray.total()); // Create column vector
+                Mat image = mGray.clone();
                 Log.i(TAG, "Vector height: " + image.height() + " Width: " + image.width() + " total: " + image.total());
                 addFace(name, image);
 
-                if (images.size() >= maximumImages) {
-                    btnTakePicture.setEnabled(false);
-                    finish();
-                } else {
-                    showToast("Ambil " + (maximumImages - images.size()) + " gambar lagi");
-                }
+
 
             }
         });
@@ -127,7 +131,7 @@ public class RegisterFaceActivity extends AppCompatActivity implements CameraBri
 
 
     }
-    List<File> files;
+    List<File> files = new ArrayList<>();
 
 
     private void showToast(String message) {
@@ -137,16 +141,53 @@ public class RegisterFaceActivity extends AppCompatActivity implements CameraBri
         mToast.show();
     }
 
-    private void addFace(String string, Mat face) {
+    private void addFace(String string, final Mat face) {
         String label = string.substring(0, 1).toUpperCase(Locale.US) + string.substring(1).trim().toLowerCase(Locale.US); // Make sure that the name is always uppercase and rest is lowercase
         imagesLabels.add(label); // Add label to list of labels
         if(face.total() != 0){
-            int size = (int) (face.total() * face.channels());
-            byte[] data = new byte[size];
-            face.get(0, 0, data);
-            String dataString = new String(Base64.encode(data, Base64.DEFAULT));
-            mDatabase.child("users").child(key).child("faces").push().child("data").setValue(dataString);
-            images.add(face);
+//            int size = (int) (face.total() * face.channels());
+//            byte[] data = new byte[size];
+//            face.get(0, 0, data);
+//            String dataString = new String(Base64.encode(data, Base64.DEFAULT));
+//            mDatabase.child("users").child(key).child("faces").push().child("data").setValue(dataString);
+
+            String faceKey = mDatabase.child("faces").push().getKey();
+            final File file = new File(getCacheDir(), faceKey+".jpg");
+            if(Imgcodecs.imwrite(file.getAbsolutePath(), face)){
+                mDatabase.child(key).child("faces").child(faceKey).setValue(faceKey+".jpg");
+                Uri uri = Uri.fromFile(file);
+
+                progressDialog.setTitle("Sedang mengupload gambar");
+                progressDialog.setCancelable(false);
+                progressDialog.show();
+                mStorage.child(key).child(faceKey+".jpg").putFile(uri)
+                        .addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+                            @Override
+                            public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
+                                progressDialog.dismiss();
+                                images.add(face);
+                                file.delete();
+                                if (images.size() >= maximumImages) {
+                                    btnTakePicture.setEnabled(false);
+                                    finish();
+                                } else {
+                                    showToast("Ambil " + (maximumImages - images.size()) + " gambar lagi");
+                                }
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                progressDialog.dismiss();
+                                AlertDialog.Builder builder = new AlertDialog.Builder(RegisterFaceActivity.this);
+                                builder.setMessage("Gagal mengupload gambar, periksa koneksi internet");
+                                builder.setPositiveButton("OKE", null);
+                                builder.show();
+                                file.delete();
+                            }
+                        });
+            }
+
         }
         Log.i(TAG, "Label: " + label);
     }

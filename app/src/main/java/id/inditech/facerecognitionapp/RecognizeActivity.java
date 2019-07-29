@@ -2,6 +2,7 @@ package id.inditech.facerecognitionapp;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
@@ -9,6 +10,7 @@ import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -204,27 +206,36 @@ public class RecognizeActivity extends AppCompatActivity implements CameraBridge
 
             float minDist = bundle.getFloat(NativeMethods.MeasureDistTask.MIN_DIST_FLOAT);
             if (minDist != -1) {
-                int minIndex = bundle.getInt(NativeMethods.MeasureDistTask.MIN_DIST_INDEX_INT);
+                final int minIndex = bundle.getInt(NativeMethods.MeasureDistTask.MIN_DIST_INDEX_INT);
                 float faceDist = bundle.getFloat(NativeMethods.MeasureDistTask.DIST_FACE_FLOAT);
                 if (imagesLabels.size() > minIndex) { // Just to be sure
                     Log.i(TAG, "dist[" + minIndex + "]: " + minDist + ", face dist: " + faceDist + ", label: " + imagesLabels.get(minIndex));
 
-                    String minDistString = String.format(Locale.US, "%.4f", minDist);
+                    String minDistString = String.format(Locale.US, "%.4f", (1 - minDist)*100);
                     String faceDistString = String.format(Locale.US, "%.4f", faceDist);
 
                     if (faceDist < faceThreshold && minDist < distanceThreshold) { // 1. Near face space and near a face class
-                        showToast("Face detected: " + imagesLabels.get(minIndex) + ". Distance: " + minDistString);
-                        User user = new User();
-                        user.setNama(imagesLabels.get(minIndex));
-                        user.setTanggal(getTanggal());
-                        user.setWaktu(getWaktu());
-                        String key = imagesLabels.get(minIndex);
-                        String keyDB = mDatabase.push().getKey();
-                        mDatabase.child(keyDB).child("tanggal").setValue(getTanggal());
-                        mDatabase.child(keyDB).child("waktu").setValue(getWaktu());
-                        mDatabase.child(keyDB).child("nama").setValue(key);
-                        showToast("Berhasil absent");
-                        finish();
+                        AlertDialog.Builder builder = new AlertDialog.Builder(RecognizeActivity.this);
+                        builder.setTitle("Hasil");
+                        builder.setMessage("Face detected: " + imagesLabels.get(minIndex) + ". Tingkat Kemiripan: " + minDistString);
+                        builder.setPositiveButton("Benar", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                User user = new User();
+                                user.setNama(imagesLabels.get(minIndex));
+                                user.setTanggal(getTanggal());
+                                user.setWaktu(getWaktu());
+                                String key = imagesLabels.get(minIndex);
+                                String keyDB = mDatabase.push().getKey();
+                                mDatabase.child(keyDB).child("tanggal").setValue(getTanggal());
+                                mDatabase.child(keyDB).child("waktu").setValue(getWaktu());
+                                mDatabase.child(keyDB).child("nama").setValue(key);
+
+                                finish();
+                            }
+                        }).setNegativeButton("Salah", null).show();
+                        //showToast("Face detected: " + imagesLabels.get(minIndex) + ". Distance: " + minDistString);
+
                     }
                     else if (faceDist < faceThreshold) {// 2. Near face space but not near a known face class
                         showToast("Unknown face. Face distance: " + faceDistString + ". Closest Distance: " + minDistString);
