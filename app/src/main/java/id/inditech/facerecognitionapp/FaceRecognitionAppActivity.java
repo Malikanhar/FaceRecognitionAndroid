@@ -96,6 +96,7 @@ public class FaceRecognitionAppActivity extends AppCompatActivity {
     public ValueEventListener postListener = new ValueEventListener() {
         @Override
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            progressDialog.dismiss();
             filesDownloaded = new ArrayList<>();
             labels.clear();
             faces.clear();
@@ -106,6 +107,9 @@ public class FaceRecognitionAppActivity extends AppCompatActivity {
                     String faceKey = face.getValue(String.class);
                     final File file = new File(getCacheDir(), faceKey);
                     totalFiles++;
+                    progressDialog.setTitle("Sedang memuat data dari database");
+                    progressDialog.setCancelable(false);
+                    progressDialog.show();
                     mStorage.child(key).child(faceKey).getFile(file)
                             .addOnCompleteListener(new OnCompleteListener<FileDownloadTask.TaskSnapshot>() {
                                 @Override
