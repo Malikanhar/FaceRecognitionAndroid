@@ -47,7 +47,7 @@ public class DaftarUserActivity extends AppCompatActivity {
 
         mRefresh.setRefreshing(true);
 
-        mDatabase = FirebaseDatabase.getInstance().getReference("users");
+        mDatabase = FirebaseDatabase.getInstance().getReference("users2");
 
         listUser = new ArrayList<>();
 

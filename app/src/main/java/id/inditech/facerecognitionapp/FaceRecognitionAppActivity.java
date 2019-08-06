@@ -157,14 +157,14 @@ public class FaceRecognitionAppActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        startActivityForResult(new Intent(FaceRecognitionAppActivity.this, LoginActivity.class), 102);
+        //startActivityForResult(new Intent(FaceRecognitionAppActivity.this, LoginActivity.class), 102);
         //startActivity(new Intent(this, LoadingActivity.class));
         setContentView(R.layout.activity_main);
         progressDialog = new ProgressDialog(this);
         tinyDB = new TinyDB(this);
         faces = new ArrayList<>();
         labels = new ArrayList<>();
-        mDatabase = FirebaseDatabase.getInstance().getReference("users");
+        mDatabase = FirebaseDatabase.getInstance().getReference("users2");
         mStorage = FirebaseStorage.getInstance().getReference("users");
 
         int MyVersion = Build.VERSION.SDK_INT;
@@ -188,8 +188,7 @@ public class FaceRecognitionAppActivity extends AppCompatActivity {
         btnRecord.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent  = new Intent(FaceRecognitionAppActivity.this, DaftarUserActivity.class);
-                startActivityForResult(intent, 101);
+                startActivityForResult(new Intent(FaceRecognitionAppActivity.this, LoginActivity.class), 102);
             }
         });
 
@@ -260,15 +259,17 @@ public class FaceRecognitionAppActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(resultCode == 111){
-            finish();
-        }
+
         switch (requestCode){
             case 101:
                 //progressDialog.setTitle("Sedang memuat data dari database");
                 //progressDialog.setCancelable(false);
                 //progressDialog.show();
                 //mDatabase.addListenerForSingleValueEvent(postListener);
+                break;
+            case 102:
+                Intent intent  = new Intent(FaceRecognitionAppActivity.this, DaftarUserActivity.class);
+                startActivityForResult(intent, 101);
                 break;
         }
     }

@@ -81,7 +81,7 @@ public class RegisterFaceActivity extends AppCompatActivity implements CameraBri
 
         progressDialog = new ProgressDialog(this);
 
-        mDatabase = FirebaseDatabase.getInstance().getReference("users");
+        mDatabase = FirebaseDatabase.getInstance().getReference("users2");
         mStorage = FirebaseStorage.getInstance().getReference("users");
 
         Bundle extras = getIntent().getExtras();
